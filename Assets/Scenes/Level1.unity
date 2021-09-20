@@ -154,8 +154,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   xDim: 10
   yDim: 10
+  fillTime: 0.1
   piecePrefabs:
   - type: 0
+    prefab: {fileID: 7894877963556262801, guid: 27a3a9db1c64c46348293967cf6819b6, type: 3}
+  - type: 1
     prefab: {fileID: 865049522018294862, guid: 60c26e157e59e48499b09e831c7a35c3, type: 3}
   backgroundPrefab: {fileID: 2177080898605786594, guid: 9f4629ea0232b4bc7a81cb367d2b055c, type: 3}
 --- !u!4 &100833635
