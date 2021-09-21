@@ -8,6 +8,7 @@ public class Grid : MonoBehaviour
     {
         EMPTY,
         NORMAL,
+        WOOD,
         COUNT,
     }
 
@@ -28,6 +29,12 @@ public class Grid : MonoBehaviour
     private Dictionary<PieceType, GameObject> piecePrefabDict;
 
     private GamePiece[,] pieces;
+
+    private bool inverse = false;
+
+    //changing pieces
+    private GamePiece pressedPiece;
+    private GamePiece enteredPiece;
 
     // Start is called before the first frame update
     void Start()
@@ -62,6 +69,9 @@ public class Grid : MonoBehaviour
 
             }
         }
+        //Destroy(pieces[4, 4].gameObject);
+        //SpawnNewPiece(4, 4, PieceType.WOOD);
+      
         StartCoroutine(Fill());
     }
 
@@ -77,6 +87,7 @@ public class Grid : MonoBehaviour
     {
         while (FillStep())
         {
+            inverse = !inverse;
             //Call fill step until returns false
             yield return new WaitForSeconds(fillTime);
         }
@@ -86,10 +97,17 @@ public class Grid : MonoBehaviour
     {
         bool movedPiece = false;
         //move in reverse order, bottom to top ignoring bottom row
-        for(int y = yDim - 2; y >= 0; y--)
+        //for (int y = 0; y <= yDim - 2; y++)
+        for (int y = yDim - 2; y >= 0; y--)
         {
-            for (int x = 0; x < xDim; x++)   
+            for (int loopX = 0; loopX < xDim; loopX++)   
             {
+                int x = loopX;
+
+                if (inverse)
+                {
+                    x = xDim - 1 - loopX;
+                }
                 GamePiece piece = pieces[x, y];
                 if (piece.IsMovable())
                 {
@@ -103,10 +121,54 @@ public class Grid : MonoBehaviour
                         movedPiece = true;
                     }
                 }
+                else
+                {
+                    //moving diagonally past obstacle
+                    for(int diag = -1; diag <= 1; diag++)
+                    {
+                        if(diag != 0)
+                        {
+                            int diagX = x + diag;
+
+                            if (inverse)
+                            {
+                                diagX = x - diag;
+                            }
+                            if(diagX >= 0 && diagX < xDim)
+                            {
+                                GamePiece diagonalPiece = pieces[diagX, y + 1];
+                                if(diagonalPiece.Type == PieceType.EMPTY)
+                                {
+                                    bool hasPieceAbove = true;
+                                    for(int aboveY = y; aboveY >= 0; aboveY--)
+                                    {
+                                        GamePiece pieceAbove = pieces[diagX, aboveY];
+                                        if (pieceAbove.IsMovable())
+                                        {
+                                            break;
+                                        }else if(!pieceAbove.IsMovable() && pieceAbove.Type != PieceType.EMPTY)
+                                        {
+                                            hasPieceAbove = false;
+                                            break;
+                                        }
+                                    }
+                                    if (!hasPieceAbove)
+                                    {
+                                        Destroy(diagonalPiece.gameObject);
+                                        piece.MovableComponet.Move(diagX, y + 1, fillTime);
+                                        pieces[diagX, y + 1] = piece;
+                                        SpawnNewPiece(x, y, PieceType.EMPTY);
+                                        movedPiece = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-
-        for (int x= 0; x< xDim; x++)
+        for (int x = 0; x < xDim; x++)
         {
             GamePiece pieceBelow = pieces[x, 0];
             if (pieceBelow.Type == PieceType.EMPTY)
@@ -145,5 +207,163 @@ public class Grid : MonoBehaviour
 
         return pieces[x, y];
 
+    }
+
+    public bool IsAdjacent(GamePiece piece1, GamePiece piece2)
+    {
+        return (piece1.X == piece2.X && (int)Mathf.Abs(piece1.Y - piece2.Y) == 1)
+            || (piece1.Y == piece2.Y && (int)Mathf.Abs(piece1.X - piece2.X) == 1);
+    }
+
+    public void SwapPieces(GamePiece piece1, GamePiece piece2)
+    {
+        if(piece1.IsMovable() && piece2.IsMovable())
+        {
+            pieces[piece1.X, piece1.Y] = piece2;
+            pieces[piece2.X, piece2.Y] = piece1;
+
+            if (GetMatch(piece1, piece2.X, piece2.Y) != null ||
+                GetMatch(piece2, piece1.X, piece1.Y) != null)
+            {
+
+                int piece1X = piece1.X;
+                int piece1Y = piece1.Y;
+
+                piece1.MovableComponet.Move(piece2.X, piece2.Y, fillTime);
+                piece2.MovableComponet.Move(piece1X, piece1Y, fillTime);
+
+            }
+            else {
+
+                pieces[piece1.X, piece1.Y] = piece1;
+                pieces[piece2.X, piece2.Y] = piece2;
+            }
+
+            
+        }
+    }
+    public void PressPiece(GamePiece piece)
+    {
+        pressedPiece = piece;
+    }
+
+    public void EnterPiece(GamePiece piece)
+    {
+        enteredPiece = piece;
+    }
+
+    public void ReleasePiece()
+    {
+        if (IsAdjacent(pressedPiece, enteredPiece))
+        {
+            SwapPieces(pressedPiece, enteredPiece);
+        }
+    }
+    public List<GamePiece> GetMatch(GamePiece piece, int newX, int newY)
+    {
+        if (piece.IsColored())
+        {
+            ColorPiece.ColorType color = piece.ColorComponet.Color;
+            List<GamePiece> horizontalPieces = new List<GamePiece>();
+            List<GamePiece> verticalPieces = new List<GamePiece>();
+            List<GamePiece> matchingPieces = new List<GamePiece>();
+
+            //First check horizontal
+
+            horizontalPieces.Add(piece);
+            for (int dir = 0; dir <= 1; dir++)
+            {
+                for (int xOffset = 1; xOffset < xDim; xOffset++)
+                {
+                    int x;
+                    if(dir == 0)  //left
+                    {
+                        x = newX - xOffset;
+                    }
+                    else //right
+                    {
+                        x = newX + xOffset;
+                    }
+
+                    if(x < 0 || x >= xDim)
+                    {
+                        //x out of grid
+                        break;
+                    }
+
+                    if(pieces[x, newY].IsColored() &&
+                        pieces[x, newY].ColorComponet.Color == color)
+                    {
+                        horizontalPieces.Add(pieces[x, newY]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (horizontalPieces.Count >= 3)
+            {
+                for(int i=0; i < horizontalPieces.Count; i++)
+                {
+                    matchingPieces.Add(horizontalPieces[i]);
+                }
+            }
+
+            if(matchingPieces.Count >= 3)
+            {
+                return matchingPieces;
+            }
+
+            //First check vertical
+
+            horizontalPieces.Add(piece);
+            for (int dir = 0; dir <= 1; dir++)
+            {
+                for (int yOffset = 1; yOffset < yDim; yOffset++)
+                {
+                    int y;
+                    if (dir == 0)  //up
+                    {
+                        y = newY - yOffset;
+                    }
+                    else //down
+                    {
+                        y = newY + yOffset;
+                    }
+
+                    if (y < 0 || y >= yDim)
+                    {
+                        //y out of grid
+                        break;
+                    }
+
+                    if (pieces[newX,y].IsColored() &&
+                        pieces[newX, y].ColorComponet.Color == color)
+                    {
+                        verticalPieces.Add(pieces[newX, y]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (verticalPieces.Count >= 3)
+            {
+                for (int i = 0; i < verticalPieces.Count; i++)
+                {
+                    matchingPieces.Add(verticalPieces[i]);
+                }
+            }
+
+            if (matchingPieces.Count >= 3)
+            {
+                return matchingPieces;
+            }
+        }
+        return null;
     }
 }
