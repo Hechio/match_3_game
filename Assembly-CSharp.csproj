@@ -53,10 +53,11 @@
     <UnityVersion>2020.3.16f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Assets/Scripts/Grid.cs" />
-    <Compile Include="Assets/Scripts/GamePiece.cs" />
     <Compile Include="Assets/Scripts/MovablePiece.cs" />
     <Compile Include="Assets/Scripts/ColorPiece.cs" />
+    <Compile Include="Assets/Scripts/GamePiece.cs" />
+    <Compile Include="Assets/Scripts/Grid.cs" />
+    <Compile Include="Assets/Scripts/ClearablePiece.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
