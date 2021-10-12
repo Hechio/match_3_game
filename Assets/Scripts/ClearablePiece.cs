@@ -38,7 +38,7 @@ public class ClearablePiece : MonoBehaviour
     private IEnumerator ClearCoroutine()
     {
         Destroy(gameObject);
-        yield return new WaitForSeconds(0);
+        yield return new WaitForSeconds(1);
         //Animator animator = GetComponent<Animator>();
         //if (animator)
         //{

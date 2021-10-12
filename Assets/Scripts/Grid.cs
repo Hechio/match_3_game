@@ -71,7 +71,7 @@ public class Grid : MonoBehaviour
         }
         //Destroy(pieces[4, 4].gameObject);
         //SpawnNewPiece(4, 4, PieceType.WOOD);
-      
+
         StartCoroutine(Fill());
     }
 

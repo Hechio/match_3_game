@@ -1,0 +1,16 @@
+Using pre-set license
+
+ COMMAND LINE ARGUMENTS:
+/Applications/Unity/Hub/Editor/2020.3.16f1/Unity.app/Contents/MacOS/Unity
+-adb2
+-batchMode
+-noUpm
+-name
+AssetImportWorker19
+-projectPath
+/Users/stevehechio/CreateWithCode/Match 3 Game
+-logFile
+Logs/AssetImportWorker19.log
+-srvPort
+49641
+Successfully changed project path to: /Users/stevehechio/CreateWithCode/Match 3 Game
